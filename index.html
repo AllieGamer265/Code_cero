@@ -60,20 +60,22 @@
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Aprende a pensar como programador</p>
       </div>
 
-      <div class="login-tabs">
-        <button id="tabLogin" class="login-tab active">Iniciar sesión</button>
-        <button id="tabRegister" class="login-tab">Crear cuenta</button>
+      <!-- Menú principal de auth -->
+      <div id="authMenu">
+        <button id="showLoginBtn" class="btn btn-primary auth-choice">🚀 Iniciar sesión</button>
+        <button id="showRegisterBtn" class="btn btn-secondary auth-choice">🔐 Crear cuenta</button>
       </div>
 
       <!-- Formulario INICIAR SESIÓN -->
-      <div id="loginPanel" class="login-panel">
+      <div id="loginPanel" class="login-panel hidden">
         <div class="login-form">
           <label class="login-label">Usuario</label>
-          <input type="text" id="loginNameInput" class="login-input" placeholder="Tu nombre de usuario..." maxlength="20" autocomplete="off">
+          <input type="text" id="loginNameInput" class="login-input" placeholder="Tu usuario..." maxlength="20" autocomplete="off">
           <label class="login-label">PIN</label>
           <input type="password" id="loginPinInput" class="login-input" placeholder="Tu PIN..." maxlength="6" inputmode="numeric">
-          <div id="loginError" class="login-error hidden">❌ Usuario o PIN incorrecto</div>
+          <div id="loginError" class="login-error hidden"></div>
           <button id="loginBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🚀 Entrar</button>
+          <button id="loginBackBtn" class="btn btn-secondary" style="width:100%; justify-content:center;">← Volver</button>
         </div>
       </div>
 
@@ -88,6 +90,7 @@
           <input type="password" id="registerPinConfirmInput" class="login-input" placeholder="Repite el PIN..." maxlength="6" inputmode="numeric">
           <div id="registerError" class="login-error hidden"></div>
           <button id="registerBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🔐 Crear cuenta</button>
+          <button id="registerBackBtn" class="btn btn-secondary" style="width:100%; justify-content:center;">← Volver</button>
         </div>
       </div>
 

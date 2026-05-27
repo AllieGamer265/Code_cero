@@ -604,28 +604,29 @@ function showLogin() {
   document.getElementById('loginError').classList.add('hidden');
   document.getElementById('registerError').classList.add('hidden');
 
-  switchLoginTab('login');
+  showAuthMenu();
 }
 
-function switchLoginTab(tab) {
-  const loginPanel = document.getElementById('loginPanel');
-  const registerPanel = document.getElementById('registerPanel');
-  const tabLogin = document.getElementById('tabLogin');
-  const tabRegister = document.getElementById('tabRegister');
+function showAuthMenu() {
+  document.getElementById('authMenu').classList.remove('hidden');
+  document.getElementById('loginPanel').classList.add('hidden');
+  document.getElementById('registerPanel').classList.add('hidden');
+}
 
-  if (tab === 'login') {
-    loginPanel.classList.remove('hidden');
-    registerPanel.classList.add('hidden');
-    tabLogin.classList.add('active');
-    tabRegister.classList.remove('active');
-    setTimeout(() => document.getElementById('loginNameInput').focus(), 100);
-  } else {
-    loginPanel.classList.add('hidden');
-    registerPanel.classList.remove('hidden');
-    tabLogin.classList.remove('active');
-    tabRegister.classList.add('active');
-    setTimeout(() => document.getElementById('registerNameInput').focus(), 100);
-  }
+function showLoginForm() {
+  document.getElementById('authMenu').classList.add('hidden');
+  document.getElementById('loginPanel').classList.remove('hidden');
+  document.getElementById('registerPanel').classList.add('hidden');
+  document.getElementById('loginError').classList.add('hidden');
+  setTimeout(() => document.getElementById('loginNameInput').focus(), 100);
+}
+
+function showRegisterForm() {
+  document.getElementById('authMenu').classList.add('hidden');
+  document.getElementById('loginPanel').classList.add('hidden');
+  document.getElementById('registerPanel').classList.remove('hidden');
+  document.getElementById('registerError').classList.add('hidden');
+  setTimeout(() => document.getElementById('registerNameInput').focus(), 100);
 }
 
 function doLogin() {
@@ -705,7 +706,8 @@ function doRegister() {
     document.getElementById('registerNameInput').value = '';
     document.getElementById('registerPinInput').value = '';
     document.getElementById('registerPinConfirmInput').value = '';
-    switchLoginTab('login');
+    document.getElementById('loginNameInput').value = name;
+    showAuthMenu();
   }, 1200);
 }
 
@@ -716,9 +718,13 @@ function startApp() {
 }
 
 function initAuth() {
-  // Tabs
-  document.getElementById('tabLogin').addEventListener('click', () => switchLoginTab('login'));
-  document.getElementById('tabRegister').addEventListener('click', () => switchLoginTab('register'));
+  // Menu buttons
+  document.getElementById('showLoginBtn').addEventListener('click', showLoginForm);
+  document.getElementById('showRegisterBtn').addEventListener('click', showRegisterForm);
+
+  // Back buttons
+  document.getElementById('loginBackBtn').addEventListener('click', showAuthMenu);
+  document.getElementById('registerBackBtn').addEventListener('click', showAuthMenu);
 
   // Login form
   document.getElementById('loginBtn').addEventListener('click', doLogin);
@@ -730,13 +736,6 @@ function initAuth() {
 
   // Switch user
   document.getElementById('switchUserBtn').addEventListener('click', () => showLogin());
-
-  // Close modal on backdrop click
-  document.getElementById('loginModal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-      // Don't close if logged in already, only if they want to switch
-    }
-  });
 }
 
 // Dark mode
