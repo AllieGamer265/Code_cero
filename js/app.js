@@ -594,38 +594,38 @@ function hashPin(pin) {
 
 function showLogin() {
   const modal = document.getElementById('loginModal');
-  modal.classList.remove('hidden');
+  modal.style.display = 'flex';
 
   document.getElementById('loginNameInput').value = '';
   document.getElementById('loginPinInput').value = '';
   document.getElementById('registerNameInput').value = '';
   document.getElementById('registerPinInput').value = '';
   document.getElementById('registerPinConfirmInput').value = '';
-  document.getElementById('loginError').classList.add('hidden');
-  document.getElementById('registerError').classList.add('hidden');
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('registerError').style.display = 'none';
 
   showAuthMenu();
 }
 
 function showAuthMenu() {
-  document.getElementById('authMenu').classList.remove('hidden');
-  document.getElementById('loginPanel').classList.add('hidden');
-  document.getElementById('registerPanel').classList.add('hidden');
+  document.getElementById('authMenu').style.display = '';
+  document.getElementById('loginPanel').style.display = 'none';
+  document.getElementById('registerPanel').style.display = 'none';
 }
 
 function showLoginForm() {
-  document.getElementById('authMenu').classList.add('hidden');
-  document.getElementById('loginPanel').classList.remove('hidden');
-  document.getElementById('registerPanel').classList.add('hidden');
-  document.getElementById('loginError').classList.add('hidden');
+  document.getElementById('authMenu').style.display = 'none';
+  document.getElementById('loginPanel').style.display = '';
+  document.getElementById('registerPanel').style.display = 'none';
+  document.getElementById('loginError').style.display = 'none';
   setTimeout(() => document.getElementById('loginNameInput').focus(), 100);
 }
 
 function showRegisterForm() {
-  document.getElementById('authMenu').classList.add('hidden');
-  document.getElementById('loginPanel').classList.add('hidden');
-  document.getElementById('registerPanel').classList.remove('hidden');
-  document.getElementById('registerError').classList.add('hidden');
+  document.getElementById('authMenu').style.display = 'none';
+  document.getElementById('loginPanel').style.display = 'none';
+  document.getElementById('registerPanel').style.display = '';
+  document.getElementById('registerError').style.display = 'none';
   setTimeout(() => document.getElementById('registerNameInput').focus(), 100);
 }
 
@@ -636,7 +636,7 @@ function doLogin() {
 
   if (!name || !pin) {
     errorEl.textContent = '❌ Completa todos los campos';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
@@ -645,12 +645,12 @@ function doLogin() {
 
   if (!user || user.pin !== hashPin(pin)) {
     errorEl.textContent = '❌ Usuario o PIN incorrecto';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
   setCurrentUser(user.name);
-  document.getElementById('loginModal').classList.add('hidden');
+  document.getElementById('loginModal').style.display = 'none';
   startApp();
 }
 
@@ -662,32 +662,32 @@ function doRegister() {
 
   if (!name || !pin || !confirm) {
     errorEl.textContent = '❌ Completa todos los campos';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
   if (name.length < 2) {
     errorEl.textContent = '❌ El usuario debe tener al menos 2 caracteres';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
   if (!/^\d{4,6}$/.test(pin)) {
     errorEl.textContent = '❌ El PIN debe ser de 4 a 6 dígitos';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
   if (pin !== confirm) {
     errorEl.textContent = '❌ Los PIN no coinciden';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
   const users = getUsers();
   if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
     errorEl.textContent = '❌ Ese usuario ya existe';
-    errorEl.classList.remove('hidden');
+    errorEl.style.display = '';
     return;
   }
 
@@ -695,7 +695,7 @@ function doRegister() {
   saveUsers(users);
 
   // Mostrar éxito y llevar al login
-  document.getElementById('registerError').classList.remove('hidden');
+  document.getElementById('registerError').style.display = '';
   document.getElementById('registerError').style.color = 'var(--success)';
   document.getElementById('registerError').textContent = '✅ Cuenta creada. Ahora inicia sesión.';
 
@@ -779,6 +779,13 @@ function init() {
   initDarkMode();
   initNav();
   initAuth();
+
+  // Ocultar paneles inicialmente
+  document.getElementById('authMenu').style.display = '';
+  document.getElementById('loginPanel').style.display = 'none';
+  document.getElementById('registerPanel').style.display = 'none';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('registerError').style.display = 'none';
 
   const savedUser = localStorage.getItem(ACTIVE_USER_KEY);
   const users = getUsers();
