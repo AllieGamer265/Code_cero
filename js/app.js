@@ -47,16 +47,16 @@ const lessons = [
     title: 'Secuencias — El orden importa',
     explanation: [
       'En un algoritmo, el <strong>orden de los pasos</strong> es fundamental. Si cambias el orden, ¡puedes obtener un resultado diferente o que algo salga mal!',
-      'Por ejemplo, para preparar cereal: primero pones el cereal en el tazón, luego la leche. Si lo haces al revés, la leche se derrama. El orden importa.',
+      'Por ejemplo: para construir una torre de bloques, primero pones la base, luego las paredes, y por último el techo. Si pones el techo antes que las paredes, ¡la torre se cae! El orden importa.',
       'En programación, la computadora ejecuta las instrucciones <strong>una por una, en el orden exacto</strong> en que se las das.',
     ],
     blocks: [
-      { text: '1. Abrir la caja de cereal', color: 3 },
-      { text: '2. Servir cereal en el tazón', color: 0 },
-      { text: '3. Verter leche', color: 1 },
-      { text: '4. ¡A comer!', color: 2 },
+      { text: '1. Colocar la BASE', color: 3 },
+      { text: '2. Poner las PAREDES', color: 0 },
+      { text: '3. Colocar el TECHO', color: 1 },
+      { text: '4. ¡Torre terminada! 🏗️', color: 2 },
     ],
-    blocksExtra: 'Si pusieras el paso 3 antes del paso 2, tendrías leche con cereal encima. ¡Todo mal!',
+    blocksExtra: 'Si pusieras el paso 3 (techo) antes del paso 2 (paredes), la torre no se sostendría. El orden de los pasos es clave en todo algoritmo.',
     quiz: [
       {
         question: '¿Qué pasa si cambias el orden de los pasos en un algoritmo?',
