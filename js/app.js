@@ -218,7 +218,11 @@ function getUserKey(user) {
   return PROGRESS_PREFIX + user.toLowerCase().trim();
 }
 
-function loadProgressFor(user) {
+async function loadProgressFor(user) {
+  if (CLOUD_ENABLED) {
+    try { return await cloudLoadProgress(user); } catch {}
+    return { completed: {}, stars: {} };
+  }
   try {
     const key = getUserKey(user);
     const saved = localStorage.getItem(key);
@@ -227,16 +231,20 @@ function loadProgressFor(user) {
   return { completed: {}, stars: {} };
 }
 
-function saveProgress() {
+async function saveProgress() {
   if (!state.currentUser) return;
+  if (CLOUD_ENABLED) {
+    try { await cloudSaveProgress(state.currentUser, state.progress); } catch {}
+    return;
+  }
   const key = getUserKey(state.currentUser);
   localStorage.setItem(key, JSON.stringify(state.progress));
 }
 
-function setCurrentUser(name) {
+async function setCurrentUser(name) {
   state.currentUser = name;
   localStorage.setItem(ACTIVE_USER_KEY, name);
-  state.progress = loadProgressFor(name);
+  state.progress = await loadProgressFor(name);
   state.currentLesson = 0;
 }
 
@@ -634,7 +642,7 @@ function showRegisterForm() {
   setTimeout(() => document.getElementById('registerNameInput').focus(), 100);
 }
 
-function doLogin() {
+async function doLogin() {
   const name = document.getElementById('loginNameInput').value.trim();
   const pin = document.getElementById('loginPinInput').value.trim();
   const errorEl = document.getElementById('loginError');
@@ -645,8 +653,13 @@ function doLogin() {
     return;
   }
 
-  const users = getUsers();
-  const user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
+  let user;
+  if (CLOUD_ENABLED) {
+    user = await cloudFindUser(name);
+  } else {
+    const users = getUsers();
+    user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
+  }
 
   if (!user || user.pin !== pin) {
     errorEl.textContent = '❌ Usuario o PIN incorrecto';
@@ -654,12 +667,12 @@ function doLogin() {
     return;
   }
 
-  setCurrentUser(user.name);
+  await setCurrentUser(user.name);
   document.getElementById('loginModal').style.display = 'none';
   startApp();
 }
 
-function doRegister() {
+async function doRegister() {
   const name = document.getElementById('registerNameInput').value.trim();
   const pin = document.getElementById('registerPinInput').value.trim();
   const confirm = document.getElementById('registerPinConfirmInput').value.trim();
@@ -689,15 +702,24 @@ function doRegister() {
     return;
   }
 
-  const users = getUsers();
-  if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
-    errorEl.textContent = '❌ Ese usuario ya existe';
-    errorEl.style.display = '';
-    return;
+  if (CLOUD_ENABLED) {
+    const exists = await cloudFindUser(name);
+    if (exists) {
+      errorEl.textContent = '❌ Ese usuario ya existe';
+      errorEl.style.display = '';
+      return;
+    }
+    await cloudCreateUser(name, pin);
+  } else {
+    const users = getUsers();
+    if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+      errorEl.textContent = '❌ Ese usuario ya existe';
+      errorEl.style.display = '';
+      return;
+    }
+    users.push({ name, pin });
+    saveUsers(users);
   }
-
-  users.push({ name, pin });
-  saveUsers(users);
 
   // Mostrar éxito y llevar al login
   document.getElementById('registerError').style.display = '';
@@ -716,7 +738,7 @@ function doRegister() {
   }, 1200);
 }
 
-function startApp() {
+async function startApp() {
   document.getElementById('userDisplay').textContent = '👤 ' + state.currentUser;
   renderLesson(0);
   updateUI();
@@ -788,7 +810,7 @@ function initNav() {
 }
 
 // Init
-function init() {
+async function init() {
   initDarkMode();
   initNav();
   initAuth();
@@ -801,13 +823,24 @@ function init() {
   document.getElementById('registerError').style.display = 'none';
 
   const savedUser = localStorage.getItem(ACTIVE_USER_KEY);
-  const users = getUsers();
-  if (savedUser && users.some(u => u.name === savedUser)) {
-    setCurrentUser(savedUser);
-    startApp();
-  } else {
-    showLogin();
+  if (savedUser) {
+    if (CLOUD_ENABLED) {
+      const exists = await cloudFindUser(savedUser);
+      if (exists) {
+        await setCurrentUser(savedUser);
+        startApp();
+        return;
+      }
+    } else {
+      const users = getUsers();
+      if (users.some(u => u.name === savedUser)) {
+        await setCurrentUser(savedUser);
+        startApp();
+        return;
+      }
+    }
   }
+  showLogin();
 }
 
 document.addEventListener('DOMContentLoaded', init);
