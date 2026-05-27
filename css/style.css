@@ -541,6 +541,8 @@ main {
   transition: opacity 0.3s;
 }
 
+.hidden { display: none !important; }
+
 .modal.hidden {
   display: none;
   opacity: 0;
