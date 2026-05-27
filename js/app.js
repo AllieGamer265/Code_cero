@@ -693,9 +693,20 @@ function doRegister() {
   users.push({ name, pin: hashPin(pin) });
   saveUsers(users);
 
-  setCurrentUser(name);
-  document.getElementById('loginModal').classList.add('hidden');
-  startApp();
+  // Mostrar éxito y llevar al login
+  document.getElementById('registerError').classList.remove('hidden');
+  document.getElementById('registerError').style.color = 'var(--success)';
+  document.getElementById('registerError').textContent = '✅ Cuenta creada. Ahora inicia sesión.';
+
+  setTimeout(() => {
+    document.getElementById('registerError').style.color = '';
+    document.getElementById('loginNameInput').value = name;
+    document.getElementById('loginPinInput').value = '';
+    document.getElementById('registerNameInput').value = '';
+    document.getElementById('registerPinInput').value = '';
+    document.getElementById('registerPinConfirmInput').value = '';
+    switchLoginTab('login');
+  }, 1200);
 }
 
 function startApp() {
