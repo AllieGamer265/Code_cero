@@ -657,6 +657,25 @@ main {
   color: var(--text);
 }
 
+.btn-reset-data {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 8px;
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.btn-reset-data:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
 /* Footer */
 footer {
   text-align: center;

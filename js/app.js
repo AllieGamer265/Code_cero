@@ -574,8 +574,19 @@ function showLessonSelector() {
 function getUsers() {
   try {
     const raw = localStorage.getItem('codecero_users');
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+    if (!raw) return [];
+    const data = JSON.parse(raw);
+    // Migrar formato antiguo (array de strings) a nuevo (array de objetos)
+    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
+      localStorage.removeItem('codecero_users');
+      localStorage.removeItem('codecero_active_user');
+      return [];
+    }
+    return data;
+  } catch {
+    localStorage.removeItem('codecero_users');
+    return [];
+  }
 }
 
 function saveUsers(users) {
@@ -736,6 +747,14 @@ function initAuth() {
 
   // Switch user
   document.getElementById('switchUserBtn').addEventListener('click', () => showLogin());
+
+  // Reset data
+  document.getElementById('resetDataBtn').addEventListener('click', () => {
+    if (confirm('¿Borrar todos los datos? Se perderán las cuentas y el progreso.')) {
+      localStorage.clear();
+      location.reload();
+    }
+  });
 }
 
 // Dark mode
