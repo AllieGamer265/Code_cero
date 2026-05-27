@@ -12,3 +12,9 @@ Desktop.ini
 # Node
 node_modules/
 npm-debug.log*
+
+imagenes/
+
+
+# Imagenes
+imagenes/
