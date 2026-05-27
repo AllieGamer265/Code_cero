@@ -218,28 +218,6 @@ function getUserKey(user) {
   return PROGRESS_PREFIX + user.toLowerCase().trim();
 }
 
-function getKnownUsers() {
-  try {
-    const raw = localStorage.getItem('codecero_users');
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveKnownUsers(users) {
-  localStorage.setItem('codecero_users', JSON.stringify(users));
-}
-
-function registerUser(name) {
-  const trimmed = name.trim();
-  if (!trimmed) return null;
-  const users = getKnownUsers();
-  if (!users.includes(trimmed)) {
-    users.push(trimmed);
-    saveKnownUsers(users);
-  }
-  return trimmed;
-}
-
 function loadProgressFor(user) {
   try {
     const key = getUserKey(user);
@@ -592,51 +570,132 @@ function showLessonSelector() {
   document.getElementById('lessonView').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Login
+// Login / Auth
+function getUsers() {
+  try {
+    const raw = localStorage.getItem('codecero_users');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveUsers(users) {
+  localStorage.setItem('codecero_users', JSON.stringify(users));
+}
+
+function hashPin(pin) {
+  let h = 0;
+  for (let i = 0; i < pin.length; i++) {
+    const c = pin.charCodeAt(i);
+    h = ((h << 5) - h) + c;
+    h |= 0;
+  }
+  return 'p' + Math.abs(h).toString(36);
+}
+
 function showLogin() {
   const modal = document.getElementById('loginModal');
-  const input = document.getElementById('loginInput');
-  const btn = document.getElementById('loginBtn');
-  const userList = document.getElementById('userList');
-  const existingContainer = document.getElementById('existingUsers');
-
   modal.classList.remove('hidden');
-  input.value = '';
-  input.focus();
 
-  const users = getKnownUsers();
-  if (users.length > 0) {
-    userList.classList.remove('hidden');
-    existingContainer.innerHTML = '';
-    users.forEach(u => {
-      if (u === state.currentUser) return;
-      const chip = document.createElement('span');
-      chip.className = 'user-chip';
-      chip.textContent = '👤 ' + u;
-      chip.addEventListener('click', () => {
-        setCurrentUser(u);
-        modal.classList.add('hidden');
-        startApp();
-      });
-      existingContainer.appendChild(chip);
-    });
+  document.getElementById('loginNameInput').value = '';
+  document.getElementById('loginPinInput').value = '';
+  document.getElementById('registerNameInput').value = '';
+  document.getElementById('registerPinInput').value = '';
+  document.getElementById('registerPinConfirmInput').value = '';
+  document.getElementById('loginError').classList.add('hidden');
+  document.getElementById('registerError').classList.add('hidden');
+
+  switchLoginTab('login');
+}
+
+function switchLoginTab(tab) {
+  const loginPanel = document.getElementById('loginPanel');
+  const registerPanel = document.getElementById('registerPanel');
+  const tabLogin = document.getElementById('tabLogin');
+  const tabRegister = document.getElementById('tabRegister');
+
+  if (tab === 'login') {
+    loginPanel.classList.remove('hidden');
+    registerPanel.classList.add('hidden');
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+    setTimeout(() => document.getElementById('loginNameInput').focus(), 100);
   } else {
-    userList.classList.add('hidden');
+    loginPanel.classList.add('hidden');
+    registerPanel.classList.remove('hidden');
+    tabLogin.classList.remove('active');
+    tabRegister.classList.add('active');
+    setTimeout(() => document.getElementById('registerNameInput').focus(), 100);
+  }
+}
+
+function doLogin() {
+  const name = document.getElementById('loginNameInput').value.trim();
+  const pin = document.getElementById('loginPinInput').value.trim();
+  const errorEl = document.getElementById('loginError');
+
+  if (!name || !pin) {
+    errorEl.textContent = '❌ Completa todos los campos';
+    errorEl.classList.remove('hidden');
+    return;
   }
 
-  const doLogin = () => {
-    const name = input.value.trim();
-    if (!name) return;
-    const registered = registerUser(name);
-    if (registered) {
-      setCurrentUser(registered);
-      modal.classList.add('hidden');
-      startApp();
-    }
-  };
+  const users = getUsers();
+  const user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
 
-  btn.onclick = doLogin;
-  input.onkeydown = (e) => { if (e.key === 'Enter') doLogin(); };
+  if (!user || user.pin !== hashPin(pin)) {
+    errorEl.textContent = '❌ Usuario o PIN incorrecto';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  setCurrentUser(user.name);
+  document.getElementById('loginModal').classList.add('hidden');
+  startApp();
+}
+
+function doRegister() {
+  const name = document.getElementById('registerNameInput').value.trim();
+  const pin = document.getElementById('registerPinInput').value.trim();
+  const confirm = document.getElementById('registerPinConfirmInput').value.trim();
+  const errorEl = document.getElementById('registerError');
+
+  if (!name || !pin || !confirm) {
+    errorEl.textContent = '❌ Completa todos los campos';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  if (name.length < 2) {
+    errorEl.textContent = '❌ El usuario debe tener al menos 2 caracteres';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  if (!/^\d{4,6}$/.test(pin)) {
+    errorEl.textContent = '❌ El PIN debe ser de 4 a 6 dígitos';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  if (pin !== confirm) {
+    errorEl.textContent = '❌ Los PIN no coinciden';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  const users = getUsers();
+  if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+    errorEl.textContent = '❌ Ese usuario ya existe';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  users.push({ name, pin: hashPin(pin) });
+  saveUsers(users);
+
+  setCurrentUser(name);
+  document.getElementById('loginModal').classList.add('hidden');
+  startApp();
 }
 
 function startApp() {
@@ -645,10 +704,27 @@ function startApp() {
   updateUI();
 }
 
-// Switch user
-function initSwitchUser() {
-  document.getElementById('switchUserBtn').addEventListener('click', () => {
-    showLogin();
+function initAuth() {
+  // Tabs
+  document.getElementById('tabLogin').addEventListener('click', () => switchLoginTab('login'));
+  document.getElementById('tabRegister').addEventListener('click', () => switchLoginTab('register'));
+
+  // Login form
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('loginPinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+  // Register form
+  document.getElementById('registerBtn').addEventListener('click', doRegister);
+  document.getElementById('registerPinConfirmInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doRegister(); });
+
+  // Switch user
+  document.getElementById('switchUserBtn').addEventListener('click', () => showLogin());
+
+  // Close modal on backdrop click
+  document.getElementById('loginModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      // Don't close if logged in already, only if they want to switch
+    }
   });
 }
 
@@ -692,10 +768,11 @@ function initNav() {
 function init() {
   initDarkMode();
   initNav();
-  initSwitchUser();
+  initAuth();
 
   const savedUser = localStorage.getItem(ACTIVE_USER_KEY);
-  if (savedUser && getKnownUsers().includes(savedUser)) {
+  const users = getUsers();
+  if (savedUser && users.some(u => u.name === savedUser)) {
     setCurrentUser(savedUser);
     startApp();
   } else {

@@ -575,7 +575,7 @@ main {
 
 /* Login */
 .login-modal {
-  max-width: 360px;
+  max-width: 380px;
 }
 
 .login-logo {
@@ -583,23 +583,55 @@ main {
   margin-bottom: 16px;
 }
 
+.login-tabs {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.login-tab.active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+.login-panel {
+  transition: opacity 0.2s;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .login-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
+  margin-top: 4px;
 }
 
 .login-input {
   padding: 12px 16px;
   border: 2px solid var(--border);
-  border-radius: 12px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 15px;
   background: var(--surface);
   color: var(--text);
   outline: none;
@@ -610,32 +642,22 @@ main {
   border-color: var(--primary);
 }
 
-.user-list {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.existing-users {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.user-chip {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 20px;
+.login-error {
   font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: var(--accent);
+  text-align: center;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(253,121,168,0.08);
 }
 
-.user-chip:hover {
-  border-color: var(--primary);
-  background: rgba(108,92,231,0.1);
+.login-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 /* Footer */

@@ -59,15 +59,39 @@
         <h1 style="font-size:32px; -webkit-text-fill-color: initial; color: var(--primary);">CodeCero</h1>
         <p style="color: var(--text-secondary); margin-bottom: 20px;">Aprende a pensar como programador</p>
       </div>
-      <div class="login-form">
-        <label for="loginInput" class="login-label">¿Quién eres?</label>
-        <input type="text" id="loginInput" class="login-input" placeholder="Tu nombre..." maxlength="20" autocomplete="off">
-        <button id="loginBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🚀 Entrar</button>
+
+      <div class="login-tabs">
+        <button id="tabLogin" class="login-tab active">Iniciar sesión</button>
+        <button id="tabRegister" class="login-tab">Crear cuenta</button>
       </div>
-      <div id="userList" class="user-list hidden">
-        <p style="font-size:13px; color: var(--text-secondary); margin-bottom:8px;">Usuarios existentes:</p>
-        <div id="existingUsers" class="existing-users"></div>
+
+      <!-- Formulario INICIAR SESIÓN -->
+      <div id="loginPanel" class="login-panel">
+        <div class="login-form">
+          <label class="login-label">Usuario</label>
+          <input type="text" id="loginNameInput" class="login-input" placeholder="Tu nombre de usuario..." maxlength="20" autocomplete="off">
+          <label class="login-label">PIN</label>
+          <input type="password" id="loginPinInput" class="login-input" placeholder="Tu PIN..." maxlength="6" inputmode="numeric">
+          <div id="loginError" class="login-error hidden">❌ Usuario o PIN incorrecto</div>
+          <button id="loginBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🚀 Entrar</button>
+        </div>
       </div>
+
+      <!-- Formulario CREAR CUENTA -->
+      <div id="registerPanel" class="login-panel hidden">
+        <div class="login-form">
+          <label class="login-label">Crea un usuario</label>
+          <input type="text" id="registerNameInput" class="login-input" placeholder="Elige un nombre..." maxlength="20" autocomplete="off">
+          <label class="login-label">Crea un PIN (4-6 dígitos)</label>
+          <input type="password" id="registerPinInput" class="login-input" placeholder="Elige un PIN..." maxlength="6" inputmode="numeric">
+          <label class="login-label">Repite el PIN</label>
+          <input type="password" id="registerPinConfirmInput" class="login-input" placeholder="Repite el PIN..." maxlength="6" inputmode="numeric">
+          <div id="registerError" class="login-error hidden"></div>
+          <button id="registerBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🔐 Crear cuenta</button>
+        </div>
+      </div>
+
+      <p class="login-hint">🔒 Tus datos se guardan solo en este dispositivo</p>
     </div>
   </div>
 
