@@ -571,24 +571,22 @@ function showLessonSelector() {
 }
 
 // Login / Auth
+function migrateData() {
+  const ver = localStorage.getItem('codecero_ver');
+  if (ver === '2') return;
+  // Limpiar datos de versiones anteriores
+  localStorage.removeItem('codecero_users');
+  localStorage.removeItem('codecero_active_user');
+  localStorage.removeItem('codecero_progress');
+  localStorage.setItem('codecero_ver', '2');
+}
+
 function getUsers() {
   try {
+    migrateData();
     const raw = localStorage.getItem('codecero_users');
     if (!raw) return [];
-    const data = JSON.parse(raw);
-    // Migrar formato antiguo #1: array de strings
-    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
-      localStorage.removeItem('codecero_users');
-      localStorage.removeItem('codecero_active_user');
-      return [];
-    }
-    // Migrar formato antiguo #2: PIN hasheado — limpiar todo
-    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0].pin && data[0].pin.startsWith('p')) {
-      localStorage.removeItem('codecero_users');
-      localStorage.removeItem('codecero_active_user');
-      return [];
-    }
-    return data;
+    return JSON.parse(raw);
   } catch {
     localStorage.removeItem('codecero_users');
     return [];
