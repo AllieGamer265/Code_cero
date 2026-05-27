@@ -575,12 +575,15 @@ main {
 
 /* Login */
 .login-modal {
-  max-width: 380px;
+  max-width: 340px;
+  padding: 28px;
 }
 
-.login-logo {
+.login-modal-title {
   text-align: center;
-  margin-bottom: 16px;
+  font-size: 22px;
+  margin-bottom: 20px;
+  color: var(--primary);
 }
 
 .auth-choice {
@@ -636,13 +639,20 @@ main {
   background: rgba(253,121,168,0.08);
 }
 
-.login-hint {
-  font-size: 12px;
+.btn-back {
+  background: transparent;
+  border: none;
   color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 8px;
+  width: 100%;
   text-align: center;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  transition: color 0.2s;
+}
+
+.btn-back:hover {
+  color: var(--text);
 }
 
 /* Footer */
