@@ -1,6 +1,20 @@
 const ACTIVE_USER_KEY = 'codecero_active_user';
 const PROGRESS_PREFIX = 'codecero_progress_';
 
+// ─── Avatares ─────────────────────────────────────────
+const avatars = [
+  { id: 0, name: 'Novato', img: '🐣' },
+  { id: 1, name: 'Pokemon', file: 'img/avatars/avatar_01.jpg' },
+  { id: 2, name: 'Aprendiz', img: '🐱', stars: 3 },
+  { id: 3, name: 'Curioso', img: '🦊', stars: 6 },
+  { id: 4, name: 'Guerrero', img: '⚔️', wins: 1 },
+  { id: 5, name: 'Programador', img: '🧙', stars: 10 },
+  { id: 6, name: 'Campeón', img: '🏆', wins: 3 },
+  { id: 7, name: 'Maestro', img: '🐉', stars: 15 },
+  { id: 8, name: 'Leyenda', img: '👑', wins: 5 },
+  { id: 9, name: 'Dios del Código', img: '🌟', stars: 20 },
+];
+
 const lessons = [
   {
     id: 0,
@@ -213,6 +227,8 @@ let state = {
   currentUser: null,
   progress: { completed: {}, stars: {} },
   profilePhoto: '',
+  selectedAvatar: 0,
+  unlockedAvatars: [0],
   pendingChallenges: [],
   activeBattles: [],
   _battleUnsub: null,
@@ -245,6 +261,16 @@ async function saveProgress() {
   localStorage.setItem(key, JSON.stringify(state.progress));
 }
 
+function getUnlockedAvatars(stars, wins) {
+  const unlocked = [];
+  avatars.forEach((a, i) => {
+    if ((!a.stars || stars >= a.stars) && (!a.wins || wins >= a.wins)) {
+      unlocked.push(i);
+    }
+  });
+  return unlocked;
+}
+
 async function setCurrentUser(name) {
   if (unsubscribeChallenge) { unsubscribeChallenge(); unsubscribeChallenge = null; }
   if (state._battleUnsub) { state._battleUnsub(); state._battleUnsub = null; }
@@ -255,6 +281,8 @@ async function setCurrentUser(name) {
   state.profilePhoto = '';
   state.pendingChallenges = [];
   state.activeBattles = [];
+  state.selectedAvatar = 0;
+  state.unlockedAvatars = [0, 1];
 }
 
 function getStars(lessonId) {
@@ -748,7 +776,9 @@ async function doRegister() {
 }
 
 async function startApp() {
-  document.getElementById('userDisplay').textContent = '👤 ' + state.currentUser;
+  const a = avatars[state.selectedAvatar] || avatars[0];
+  const avatarImg = a.file ? `<img src="${a.file}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;">` : a.img;
+  document.getElementById('userDisplay').innerHTML = avatarImg + ' ' + state.currentUser;
   document.getElementById('mainNav').classList.remove('hidden');
   initMainNav();
   showSection('lessons');
@@ -863,18 +893,41 @@ async function renderProfile() {
         losses = data.losses || 0;
         streak = data.streak || 0;
         state.profilePhoto = data.photo || '';
+        if (data.avatar != null) state.selectedAvatar = data.avatar;
       }
     } catch {}
   }
 
+  // Desbloquear avatares según logros
+  state.unlockedAvatars = getUnlockedAvatars(totalStars, wins);
+
+  let avatarGrid = '<h3 style="margin:20px 0 10px;">🎭 Avatares</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;">';
+  avatars.forEach((a, i) => {
+    const unlocked = state.unlockedAvatars.includes(i);
+    const selected = state.selectedAvatar === i;
+    let unlockText = '';
+    if (!unlocked) {
+      const reqs = [];
+      if (a.stars) reqs.push(`⭐ ${a.stars} estrellas`);
+      if (a.wins) reqs.push(`🏆 ${a.wins} ganadas`);
+      unlockText = reqs.join(' + ');
+    }
+    const imgHtml = a.file
+      ? `<img src="${a.file}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`
+      : `<span style="font-size:32px;">${a.img}</span>`;
+    avatarGrid += `
+      <div onclick="${unlocked ? `selectAvatar(${i})` : ''}"
+        style="background:${selected ? 'var(--primary)' : 'var(--surface2)'};border:2px solid ${selected ? 'var(--primary)' : unlocked ? 'var(--success)' : 'var(--border)'};border-radius:12px;padding:8px;text-align:center;cursor:${unlocked ? 'pointer' : 'default'};opacity:${unlocked ? 1 : 0.4};transition:all 0.2s;">
+        ${imgHtml}
+        <div style="font-size:10px;margin-top:4px;font-weight:600;color:${selected ? '#fff' : unlocked ? 'var(--success)' : 'var(--text-secondary)'};">${unlocked ? a.name : '🔒'}</div>
+        ${unlockText ? `<div style="font-size:8px;color:var(--text-secondary);margin-top:2px;">${unlockText}</div>` : ''}
+      </div>
+    `;
+  });
+  avatarGrid += '</div>';
+
   container.innerHTML = `
     <div class="profile-card">
-      <div class="profile-photo-container">
-        ${state.profilePhoto
-          ? `<img src="${state.profilePhoto}" class="profile-photo" alt="foto">`
-          : `<div class="profile-photo-placeholder" id="photoPlaceholder">📷</div>`
-        }
-      </div>
       <div class="profile-name">${user}</div>
       <div class="profile-level-badge">Nivel ${level}</div>
       <div class="profile-stats">
@@ -891,21 +944,20 @@ async function renderProfile() {
           <div class="stat-label">Perdidas</div>
         </div>
       </div>
-      <div class="profile-photo-url-input">
-        <input type="text" id="photoUrlInput" placeholder="URL de tu foto (opcional)" value="${state.profilePhoto || ''}">
-        <button id="savePhotoBtn" class="btn btn-primary" style="white-space:nowrap;">Guardar</button>
-      </div>
+      ${avatarGrid}
     </div>
   `;
+}
 
-  document.getElementById('savePhotoBtn').addEventListener('click', async () => {
-    const url = document.getElementById('photoUrlInput').value.trim();
-    state.profilePhoto = url;
-    if (CLOUD_ENABLED) {
-      await window.__db.collection('users').doc(user.toLowerCase()).update({ photo: url });
-    }
-    renderProfile();
-  });
+function selectAvatar(id) {
+  state.selectedAvatar = id;
+  const a = avatars[id];
+  const imgHtml = a.file ? `<img src="${a.file}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;">` : a.img;
+  document.getElementById('userDisplay').innerHTML = imgHtml + ' ' + state.currentUser;
+  if (CLOUD_ENABLED) {
+    window.__db.collection('users').doc(state.currentUser.toLowerCase()).update({ avatar: id });
+  }
+  renderProfile();
 }
 
 // ─── Batallas ─────────────────────────────────────────
