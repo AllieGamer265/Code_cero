@@ -13,6 +13,10 @@
       <h1>CodeCero</h1>
     </div>
     <div class="header-controls">
+      <div class="user-info" id="userInfo">
+        <span id="userDisplay" class="user-badge">👤 invitado</span>
+        <button id="switchUserBtn" class="btn-tiny" title="Cambiar usuario">🔄</button>
+      </div>
       <div class="progress-info">
         <span id="levelDisplay">Nivel 1</span>
         <span id="starCount">★ 0</span>
@@ -46,6 +50,26 @@
       </div>
     </section>
   </main>
+
+  <!-- Modal de inicio de sesión -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content login-modal">
+      <div class="login-logo">
+        <span class="logo-icon" style="font-size:48px;">◈</span>
+        <h1 style="font-size:32px; -webkit-text-fill-color: initial; color: var(--primary);">CodeCero</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Aprende a pensar como programador</p>
+      </div>
+      <div class="login-form">
+        <label for="loginInput" class="login-label">¿Quién eres?</label>
+        <input type="text" id="loginInput" class="login-input" placeholder="Tu nombre..." maxlength="20" autocomplete="off">
+        <button id="loginBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🚀 Entrar</button>
+      </div>
+      <div id="userList" class="user-list hidden">
+        <p style="font-size:13px; color: var(--text-secondary); margin-bottom:8px;">Usuarios existentes:</p>
+        <div id="existingUsers" class="existing-users"></div>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <p>CodeCero — Aprende lógica de programación desde cero</p>

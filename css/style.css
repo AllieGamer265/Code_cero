@@ -71,7 +71,40 @@ h1 {
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  padding: 4px 10px 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.user-badge {
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-tiny {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.btn-tiny:hover {
+  opacity: 1;
 }
 
 .progress-info {
@@ -538,6 +571,71 @@ main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* Login */
+.login-modal {
+  max-width: 360px;
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-input {
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 16px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.login-input:focus {
+  border-color: var(--primary);
+}
+
+.user-list {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.existing-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.user-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-chip:hover {
+  border-color: var(--primary);
+  background: rgba(108,92,231,0.1);
 }
 
 /* Footer */

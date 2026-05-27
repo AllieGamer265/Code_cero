@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'codecero_progress';
+const ACTIVE_USER_KEY = 'codecero_active_user';
+const PROGRESS_PREFIX = 'codecero_progress_';
 
 const lessons = [
   {
@@ -209,18 +210,56 @@ const lessons = [
 // Estado
 let state = {
   currentLesson: 0,
+  currentUser: null,
   progress: { completed: {}, stars: {} },
 };
 
-function loadProgress() {
+function getUserKey(user) {
+  return PROGRESS_PREFIX + user.toLowerCase().trim();
+}
+
+function getKnownUsers() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) state.progress = JSON.parse(saved);
+    const raw = localStorage.getItem('codecero_users');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveKnownUsers(users) {
+  localStorage.setItem('codecero_users', JSON.stringify(users));
+}
+
+function registerUser(name) {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const users = getKnownUsers();
+  if (!users.includes(trimmed)) {
+    users.push(trimmed);
+    saveKnownUsers(users);
+  }
+  return trimmed;
+}
+
+function loadProgressFor(user) {
+  try {
+    const key = getUserKey(user);
+    const saved = localStorage.getItem(key);
+    if (saved) return JSON.parse(saved);
   } catch {}
+  return { completed: {}, stars: {} };
 }
 
 function saveProgress() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
+  if (!state.currentUser) return;
+  const key = getUserKey(state.currentUser);
+  localStorage.setItem(key, JSON.stringify(state.progress));
+}
+
+function setCurrentUser(name) {
+  state.currentUser = name;
+  localStorage.setItem(ACTIVE_USER_KEY, name);
+  state.progress = loadProgressFor(name);
+  state.currentLesson = 0;
 }
 
 function getStars(lessonId) {
@@ -553,6 +592,66 @@ function showLessonSelector() {
   document.getElementById('lessonView').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Login
+function showLogin() {
+  const modal = document.getElementById('loginModal');
+  const input = document.getElementById('loginInput');
+  const btn = document.getElementById('loginBtn');
+  const userList = document.getElementById('userList');
+  const existingContainer = document.getElementById('existingUsers');
+
+  modal.classList.remove('hidden');
+  input.value = '';
+  input.focus();
+
+  const users = getKnownUsers();
+  if (users.length > 0) {
+    userList.classList.remove('hidden');
+    existingContainer.innerHTML = '';
+    users.forEach(u => {
+      if (u === state.currentUser) return;
+      const chip = document.createElement('span');
+      chip.className = 'user-chip';
+      chip.textContent = '👤 ' + u;
+      chip.addEventListener('click', () => {
+        setCurrentUser(u);
+        modal.classList.add('hidden');
+        startApp();
+      });
+      existingContainer.appendChild(chip);
+    });
+  } else {
+    userList.classList.add('hidden');
+  }
+
+  const doLogin = () => {
+    const name = input.value.trim();
+    if (!name) return;
+    const registered = registerUser(name);
+    if (registered) {
+      setCurrentUser(registered);
+      modal.classList.add('hidden');
+      startApp();
+    }
+  };
+
+  btn.onclick = doLogin;
+  input.onkeydown = (e) => { if (e.key === 'Enter') doLogin(); };
+}
+
+function startApp() {
+  document.getElementById('userDisplay').textContent = '👤 ' + state.currentUser;
+  renderLesson(0);
+  updateUI();
+}
+
+// Switch user
+function initSwitchUser() {
+  document.getElementById('switchUserBtn').addEventListener('click', () => {
+    showLogin();
+  });
+}
+
 // Dark mode
 function initDarkMode() {
   const toggle = document.getElementById('darkToggle');
@@ -591,11 +690,17 @@ function initNav() {
 
 // Init
 function init() {
-  loadProgress();
   initDarkMode();
   initNav();
-  renderLesson(0);
-  updateUI();
+  initSwitchUser();
+
+  const savedUser = localStorage.getItem(ACTIVE_USER_KEY);
+  if (savedUser && getKnownUsers().includes(savedUser)) {
+    setCurrentUser(savedUser);
+    startApp();
+  } else {
+    showLogin();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
