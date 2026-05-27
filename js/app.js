@@ -576,8 +576,14 @@ function getUsers() {
     const raw = localStorage.getItem('codecero_users');
     if (!raw) return [];
     const data = JSON.parse(raw);
-    // Migrar formato antiguo (array de strings) a nuevo (array de objetos)
+    // Migrar formato antiguo #1: array de strings
     if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
+      localStorage.removeItem('codecero_users');
+      localStorage.removeItem('codecero_active_user');
+      return [];
+    }
+    // Migrar formato antiguo #2: PIN hasheado — limpiar todo
+    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0].pin && data[0].pin.startsWith('p')) {
       localStorage.removeItem('codecero_users');
       localStorage.removeItem('codecero_active_user');
       return [];
@@ -591,16 +597,6 @@ function getUsers() {
 
 function saveUsers(users) {
   localStorage.setItem('codecero_users', JSON.stringify(users));
-}
-
-function hashPin(pin) {
-  let h = 0;
-  for (let i = 0; i < pin.length; i++) {
-    const c = pin.charCodeAt(i);
-    h = ((h << 5) - h) + c;
-    h |= 0;
-  }
-  return 'p' + Math.abs(h).toString(36);
 }
 
 function showLogin() {
@@ -654,7 +650,7 @@ function doLogin() {
   const users = getUsers();
   const user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
 
-  if (!user || user.pin !== hashPin(pin)) {
+  if (!user || user.pin !== pin) {
     errorEl.textContent = '❌ Usuario o PIN incorrecto';
     errorEl.style.display = '';
     return;
@@ -702,7 +698,7 @@ function doRegister() {
     return;
   }
 
-  users.push({ name, pin: hashPin(pin) });
+  users.push({ name, pin });
   saveUsers(users);
 
   // Mostrar éxito y llevar al login
