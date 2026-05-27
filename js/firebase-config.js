@@ -10,12 +10,12 @@
 //  ═══════════════════════════════════════════════════════════
 
 const FIREBASE_CONFIG = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyBr8FsSw13GN0lSfmyzbY4UFiMJSWClB2w",
+  authDomain: "code-cero.firebaseapp.com",
+  projectId: "code-cero",
+  storageBucket: "code-cero.firebasestorage.app",
+  messagingSenderId: "919081962255",
+  appId: "1:919081962255:web:1771d23cb0ccc8f4f28c7a"
 };
 
 // ═══════════════════════════════════════════════════════════
