@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeCero — Aprende a pensar como programador</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span class="logo-icon">◈</span>
+      <h1>CodeCero</h1>
+    </div>
+    <div class="header-controls">
+      <div class="progress-info">
+        <span id="levelDisplay">Nivel 1</span>
+        <span id="starCount">★ 0</span>
+      </div>
+      <button id="darkToggle" aria-label="Modo oscuro">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Lección -->
+    <section id="lessonView">
+      <div class="lesson-progress-bar">
+        <div id="progressBar" class="progress-fill"></div>
+      </div>
+
+      <div id="lessonContent">
+        <!-- Se rellena con JS -->
+      </div>
+
+      <div class="lesson-nav">
+        <button id="prevBtn" class="btn btn-secondary">← Anterior</button>
+        <button id="nextBtn" class="btn btn-primary">Siguiente →</button>
+      </div>
+    </section>
+
+    <!-- Selector de lecciones -->
+    <section id="lessonSelector">
+      <h2>Tus lecciones</h2>
+      <div id="lessonList" class="lesson-grid">
+        <!-- Se rellena con JS -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>CodeCero — Aprende lógica de programación desde cero</p>
+  </footer>
+
+  <!-- Modal de resultado -->
+  <div id="resultModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="resultTitle">🎉 Lección completada</h2>
+      <div id="resultStars" class="star-display"></div>
+      <p id="resultMessage"></p>
+      <div class="modal-actions">
+        <button id="resultContinueBtn" class="btn btn-primary">Siguiente lección</button>
+        <button id="resultRetryBtn" class="btn btn-secondary">Repetir quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
