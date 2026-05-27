@@ -212,6 +212,10 @@ let state = {
   currentLesson: 0,
   currentUser: null,
   progress: { completed: {}, stars: {} },
+  profilePhoto: '',
+  pendingChallenges: [],
+  activeBattles: [],
+  _battleUnsub: null,
 };
 
 function getUserKey(user) {
@@ -242,10 +246,15 @@ async function saveProgress() {
 }
 
 async function setCurrentUser(name) {
+  if (unsubscribeChallenge) { unsubscribeChallenge(); unsubscribeChallenge = null; }
+  if (state._battleUnsub) { state._battleUnsub(); state._battleUnsub = null; }
   state.currentUser = name;
   localStorage.setItem(ACTIVE_USER_KEY, name);
   state.progress = await loadProgressFor(name);
   state.currentLesson = 0;
+  state.profilePhoto = '';
+  state.pendingChallenges = [];
+  state.activeBattles = [];
 }
 
 function getStars(lessonId) {
@@ -740,6 +749,9 @@ async function doRegister() {
 
 async function startApp() {
   document.getElementById('userDisplay').textContent = '👤 ' + state.currentUser;
+  document.getElementById('mainNav').classList.remove('hidden');
+  initMainNav();
+  showSection('lessons');
   renderLesson(0);
   updateUI();
 }
@@ -807,6 +819,472 @@ function initNav() {
   document.getElementById('nextBtn').addEventListener('click', () => {
     if (state.currentLesson < lessons.length - 1) goToLesson(state.currentLesson + 1);
   });
+}
+
+// ─── Navegación principal ─────────────────────────────
+let unsubscribeChallenge = null;
+
+function initMainNav() {
+  document.getElementById('navLessons').addEventListener('click', () => showSection('lessons'));
+  document.getElementById('navBattles').addEventListener('click', () => showSection('battles'));
+  document.getElementById('navProfile').addEventListener('click', () => showSection('profile'));
+}
+
+function showSection(section) {
+  document.getElementById('navLessons').classList.toggle('active', section === 'lessons');
+  document.getElementById('navBattles').classList.toggle('active', section === 'battles');
+  document.getElementById('navProfile').classList.toggle('active', section === 'profile');
+
+  document.getElementById('lessonView').style.display = section === 'lessons' ? '' : 'none';
+  document.getElementById('lessonSelector').style.display = section === 'lessons' ? '' : 'none';
+  document.getElementById('profileSection').style.display = section === 'profile' ? '' : 'none';
+  document.getElementById('battleSection').style.display = section === 'battles' ? '' : 'none';
+
+  if (section === 'profile') renderProfile();
+  if (section === 'battles') renderBattles();
+}
+
+// ─── Perfil ───────────────────────────────────────────
+async function renderProfile() {
+  const container = document.getElementById('profileContent');
+  const user = state.currentUser;
+  const progress = state.progress;
+  const totalStars = getTotalStars();
+  const level = Math.min(Math.floor(totalStars / 2) + 1, 10);
+
+  // Obtener stats desde la nube o localStorage
+  let wins = 0, losses = 0, streak = 0;
+  if (CLOUD_ENABLED) {
+    try {
+      const doc = await window.__db.collection('users').doc(user.toLowerCase()).get();
+      if (doc.exists) {
+        const data = doc.data();
+        wins = data.wins || 0;
+        losses = data.losses || 0;
+        streak = data.streak || 0;
+        state.profilePhoto = data.photo || '';
+      }
+    } catch {}
+  }
+
+  container.innerHTML = `
+    <div class="profile-card">
+      <div class="profile-photo-container">
+        ${state.profilePhoto
+          ? `<img src="${state.profilePhoto}" class="profile-photo" alt="foto">`
+          : `<div class="profile-photo-placeholder" id="photoPlaceholder">📷</div>`
+        }
+      </div>
+      <div class="profile-name">${user}</div>
+      <div class="profile-level-badge">Nivel ${level}</div>
+      <div class="profile-stats">
+        <div class="stat-box">
+          <div class="stat-value">⭐ ${totalStars}</div>
+          <div class="stat-label">Estrellas</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">🏆 ${wins}</div>
+          <div class="stat-label">Ganadas</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">💔 ${losses}</div>
+          <div class="stat-label">Perdidas</div>
+        </div>
+      </div>
+      <div class="profile-photo-url-input">
+        <input type="text" id="photoUrlInput" placeholder="URL de tu foto (opcional)" value="${state.profilePhoto || ''}">
+        <button id="savePhotoBtn" class="btn btn-primary" style="white-space:nowrap;">Guardar</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('savePhotoBtn').addEventListener('click', async () => {
+    const url = document.getElementById('photoUrlInput').value.trim();
+    state.profilePhoto = url;
+    if (CLOUD_ENABLED) {
+      await window.__db.collection('users').doc(user.toLowerCase()).update({ photo: url });
+    }
+    renderProfile();
+  });
+}
+
+// ─── Batallas ─────────────────────────────────────────
+async function renderBattles() {
+  const container = document.getElementById('battleContent');
+  const user = state.currentUser;
+
+  if (!CLOUD_ENABLED) {
+    container.innerHTML = `
+      <div class="battle-menu">
+        <p style="color:var(--text-secondary);">⚔️ Las batallas solo funcionan con la nube activada.</p>
+        <p style="font-size:13px;color:var(--text-secondary);">Configura Firebase en js/firebase-config.js</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Escuchar retos pendientes
+  if (unsubscribeChallenge) unsubscribeChallenge();
+  unsubscribeChallenge = window.__db.collection('challenges')
+    .where('to', '==', user.toLowerCase())
+    .where('status', '==', 'pending')
+    .onSnapshot(snap => {
+      const challenges = [];
+      snap.forEach(d => challenges.push({ id: d.id, ...d.data() }));
+      state.pendingChallenges = challenges;
+      renderBattleUI();
+    });
+
+  // Escuchar batallas activas
+  if (state._battleUnsub) state._battleUnsub();
+  state._battleUnsub = window.__db.collection('battles')
+    .where('players', 'array-contains', user.toLowerCase())
+    .where('status', 'in', ['active', 'waiting'])
+    .onSnapshot(snap => {
+      const battles = [];
+      snap.forEach(d => battles.push({ id: d.id, ...d.data() }));
+      state.activeBattles = battles;
+      renderBattleUI();
+    });
+
+  renderBattleUI();
+}
+
+function renderBattleUI() {
+  const container = document.getElementById('battleContent');
+  const user = state.currentUser;
+
+  const pendientes = state.pendingChallenges || [];
+  const activas = state.activeBattles || [];
+
+  let html = '';
+
+  // Retos pendientes
+  if (pendientes.length > 0) {
+    html += '<h3 style="margin-bottom:12px;">🔔 Retos pendientes</h3>';
+    pendientes.forEach(c => {
+      const lesson = lessons[c.lessonId] || { title: 'Desconocida' };
+      html += `
+        <div class="battle-pending">
+          <h3>⚔️ ${c.from} te reta</h3>
+          <p>Lección: ${lesson.title}</p>
+          <button class="btn btn-primary" onclick="acceptChallenge('${c.id}','${c.from}','${c.lessonId}')">✅ Aceptar</button>
+        </div>
+      `;
+    });
+  }
+
+  // Batallas activas
+  if (activas.length > 0) {
+    html += '<h3 style="margin-bottom:12px;">⚔️ Batallas activas</h3>';
+    activas.forEach(b => {
+      const isPlayer1 = b.player1 === user.toLowerCase();
+      const opponent = isPlayer1 ? b.player2 : b.player1;
+      const lesson = lessons[b.lessonId] || { title: 'Desconocida' };
+      const myAnswers = isPlayer1 ? (b.answers1 || []) : (b.answers2 || []);
+      const myScore = isPlayer1 ? (b.score1 != null ? b.score1 : '?') : (b.score2 != null ? b.score2 : '?');
+
+      if (b.status === 'waiting' || (b.status === 'active' && myAnswers.length === 0)) {
+        html += `
+          <div class="battle-active">
+            <h3>⚔️ Batalla vs ${opponent}</h3>
+            <p>Lección: ${lesson.title}</p>
+            <button class="btn btn-primary" onclick="enterBattle('${b.id}','${isPlayer1}','${b.lessonId}')">🎯 Responder</button>
+          </div>
+        `;
+      } else if (b.status === 'active' && myAnswers.length > 0) {
+        html += `
+          <div class="battle-active">
+            <h3>⚔️ Batalla vs ${opponent}</h3>
+            <p>Lección: ${lesson.title}</p>
+            <p style="color:var(--text-secondary);">✅ Ya respondiste. Esperando a ${opponent}...</p>
+            <div class="battle-waiting">
+              <div class="spinner">⏳</div>
+            </div>
+          </div>
+        `;
+      }
+    });
+  }
+
+  // Botón retar
+  html += `
+    <div class="battle-menu">
+      <h3>Retar a alguien</h3>
+      <p style="color:var(--text-secondary);margin-bottom:16px;">Elige una lección y un usuario para retar</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;max-width:400px;margin-left:auto;margin-right:auto;">
+        <select id="battleLessonSelect" class="login-input" style="flex:1;">
+          ${lessons.map((l, i) => `<option value="${i}">${l.icon} ${l.title}</option>`).join('')}
+        </select>
+        <button id="showUsersBtn" class="btn btn-primary">Ver usuarios</button>
+      </div>
+      <div id="battleUserList"></div>
+    </div>
+  `;
+
+  if (!pendientes.length && !activas.length && !html) {
+    html += '<p style="text-align:center;color:var(--text-secondary);">No hay batallas activas.</p>';
+  }
+
+  container.innerHTML = html;
+
+  document.getElementById('showUsersBtn')?.addEventListener('click', loadOnlineUsers);
+}
+
+async function loadOnlineUsers() {
+  const list = document.getElementById('battleUserList');
+  list.innerHTML = '<p style="color:var(--text-secondary);">Cargando usuarios...</p>';
+
+  try {
+    const snap = await window.__db.collection('users').get();
+    const users = [];
+    snap.forEach(d => {
+      if (d.id !== state.currentUser.toLowerCase()) {
+        users.push({ name: d.id, photo: d.data().photo || '' });
+      }
+    });
+
+    if (users.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-secondary);">No hay otros usuarios registrados.</p>';
+      return;
+    }
+
+    list.innerHTML = '<div class="battle-users-list">' + users.map(u => `
+      <div class="battle-user-card" onclick="sendChallenge('${u.name}')">
+        <div class="user-avatar">${u.photo ? '<img src="'+u.photo+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">' : '👤'}</div>
+        <div class="user-name">${u.name}</div>
+        <div class="user-status online">● En línea</div>
+      </div>
+    `).join('') + '</div>';
+  } catch {
+    list.innerHTML = '<p style="color:var(--text-secondary);">Error al cargar usuarios.</p>';
+  }
+}
+
+async function sendChallenge(toUser) {
+  const lessonId = parseInt(document.getElementById('battleLessonSelect').value);
+  const from = state.currentUser.toLowerCase();
+
+  // Verificar que no haya un reto pendiente ya
+  const existing = await window.__db.collection('challenges')
+    .where('from', '==', from)
+    .where('to', '==', toUser.toLowerCase())
+    .where('status', '==', 'pending')
+    .get();
+
+  if (!existing.empty) {
+    alert('Ya tienes un reto pendiente con este usuario.');
+    return;
+  }
+
+  await window.__db.collection('challenges').add({
+    from,
+    to: toUser.toLowerCase(),
+    lessonId,
+    status: 'pending',
+    createdAt: Date.now()
+  });
+
+  document.getElementById('battleUserList').innerHTML = '<p style="color:var(--success);">✅ Reto enviado a ' + toUser + '</p>';
+}
+
+async function acceptChallenge(challengeId, fromUser, lessonId) {
+  try {
+    const lessonIdNum = parseInt(lessonId);
+    const user = state.currentUser.toLowerCase();
+
+    // Crear batalla
+    const battleRef = await window.__db.collection('battles').add({
+      player1: fromUser.toLowerCase(),
+      player2: user,
+      lessonId: lessonIdNum,
+      status: 'waiting',
+      answers1: [],
+      answers2: [],
+      score1: null,
+      score2: null
+    });
+
+    // Marcar reto como aceptado
+    await window.__db.collection('challenges').doc(challengeId).update({ status: 'accepted' });
+
+    // Entrar a la batalla
+    enterBattle(battleRef.id, false, lessonIdNum);
+  } catch (e) {
+    alert('Error al aceptar el reto: ' + e.message);
+  }
+}
+
+let _battleSubmitted = false;
+
+async function enterBattle(battleId, isPlayer1Str, lessonId) {
+  const isPlayer1 = isPlayer1Str === 'true' || isPlayer1Str === true;
+  const lesson = lessons[parseInt(lessonId)];
+  if (!lesson) return;
+
+  _battleSubmitted = false;
+
+  // Marcar como activa si estaba waiting
+  await window.__db.collection('battles').doc(battleId).update({ status: 'active' });
+
+  const container = document.getElementById('battleContent');
+  container.innerHTML = `
+    <div class="lesson-header">
+      <div class="lesson-title">⚔️ Batalla — ${lesson.title}</div>
+      <p style="color:var(--text-secondary);font-size:14px;">Responde las preguntas para ganar</p>
+    </div>
+    <div id="battleQuestions"></div>
+    <button id="battleSubmitBtn" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:16px;">📤 Enviar respuestas</button>
+  `;
+
+  const qContainer = document.getElementById('battleQuestions');
+  lesson.quiz.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'battle-question';
+    div.innerHTML = `<p>${qi+1}. ${q.question}</p>`;
+    const opts = document.createElement('div');
+    opts.className = 'quiz-options';
+    q.options.forEach((opt, oi) => {
+      const label = document.createElement('label');
+      label.className = 'quiz-option';
+      label.innerHTML = `<input type="radio" name="bq_${qi}" value="${oi}"> ${opt}`;
+      label.addEventListener('click', () => {
+        opts.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+        label.classList.add('selected');
+        label.querySelector('input').checked = true;
+      });
+      opts.appendChild(label);
+    });
+    div.appendChild(opts);
+    qContainer.appendChild(div);
+  });
+
+  document.getElementById('battleSubmitBtn').addEventListener('click', async () => {
+    if (_battleSubmitted) return;
+    _battleSubmitted = true;
+
+    const answers = [];
+    lesson.quiz.forEach((q, qi) => {
+      const selected = document.querySelector(`input[name="bq_${qi}"]:checked`);
+      answers.push(selected ? parseInt(selected.value) : -1);
+    });
+
+    const correctCount = answers.filter((a, i) => a === lesson.quiz[i].correct).length;
+    const total = lesson.quiz.length;
+    const score = Math.round((correctCount / total) * 100);
+
+    // Obtener datos actuales
+    const battleDoc = await window.__db.collection('battles').doc(battleId).get();
+    const battle = battleDoc.data();
+
+    const isP1 = battle.player1 === state.currentUser.toLowerCase();
+    const updateData = isP1
+      ? { answers1: answers, score1: score }
+      : { answers2: answers, score2: score };
+
+    await window.__db.collection('battles').doc(battleId).update(updateData);
+
+    // Verificar si ambos respondieron
+    const updated = await window.__db.collection('battles').doc(battleId).get();
+    const b = updated.data();
+
+    if (b.score1 != null && b.score2 != null) {
+      // Batalla completa
+      const winner = b.score1 > b.score2 ? b.player1 : b.score2 > b.score1 ? b.player2 : 'draw';
+      await window.__db.collection('battles').doc(battleId).update({
+        status: 'complete',
+        winner
+      });
+
+      // Actualizar stats
+      const p1Doc = await window.__db.collection('users').doc(b.player1).get();
+      const p2Doc = await window.__db.collection('users').doc(b.player2).get();
+      const p1Data = p1Doc.data() || {};
+      const p2Data = p2Doc.data() || {};
+
+      const winnerName = winner !== 'draw' ? winner : null;
+      if (winnerName) {
+        await window.__db.collection('users').doc(winnerName).update({
+          wins: (winnerName === b.player1 ? (p1Data.wins || 0) : (p2Data.wins || 0)) + 1,
+          streak: (winnerName === b.player1 ? (p1Data.streak || 0) : (p2Data.streak || 0)) + 1
+        });
+        const loserName = winnerName === b.player1 ? b.player2 : b.player1;
+        await window.__db.collection('users').doc(loserName).update({
+          losses: (loserName === b.player1 ? (p1Data.losses || 0) : (p2Data.losses || 0)) + 1,
+          streak: 0
+        });
+      } else {
+        // Empate
+        await window.__db.collection('users').doc(b.player1).update({ streak: 0 });
+        await window.__db.collection('users').doc(b.player2).update({ streak: 0 });
+      }
+
+      showBattleResult(b);
+    } else {
+      container.innerHTML = `
+        <div class="battle-waiting">
+          <div class="spinner">⏳</div>
+          <h3>¡Respuestas enviadas!</h3>
+          <p style="color:var(--text-secondary);">Esperando a que el otro jugador responda...</p>
+        </div>
+      `;
+    }
+  });
+}
+
+function showBattleResult(battle) {
+  const modal = document.getElementById('battleResultModal');
+  const title = document.getElementById('battleResultTitle');
+  const content = document.getElementById('battleResultContent');
+  const user = state.currentUser.toLowerCase();
+  const isP1 = battle.player1 === user;
+
+  const myScore = isP1 ? battle.score1 : battle.score2;
+  const oppScore = isP1 ? battle.score2 : battle.score1;
+  const myName = isP1 ? battle.player1 : battle.player2;
+  const oppName = isP1 ? battle.player2 : battle.player1;
+  const winner = battle.winner;
+
+  let resultText, myBadge, oppBadge;
+  if (winner === 'draw') {
+    resultText = '🤝 Empate';
+    myBadge = '🤝';
+    oppBadge = '🤝';
+  } else if (winner === user) {
+    resultText = '🎉 ¡Ganaste!';
+    myBadge = '🏆';
+    oppBadge = '💔';
+  } else {
+    resultText = '😔 Perdiste';
+    myBadge = '💔';
+    oppBadge = '🏆';
+  }
+
+  title.textContent = `⚔️ ${resultText}`;
+  content.innerHTML = `
+    <div class="battle-result-card ${winner === user ? 'winner' : 'loser'}">
+      <div class="result-avatar">👤</div>
+      <div class="result-info">
+        <div class="result-name">${myName} (tú)</div>
+        <div class="result-score">${myScore}% correcto</div>
+      </div>
+      <div class="result-badge">${myBadge}</div>
+    </div>
+    <div class="battle-result-card ${winner === oppName ? 'winner' : 'loser'}">
+      <div class="result-avatar">👤</div>
+      <div class="result-info">
+        <div class="result-name">${oppName}</div>
+        <div class="result-score">${oppScore}% correcto</div>
+      </div>
+      <div class="result-badge">${oppBadge}</div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  document.getElementById('battleResultOkBtn').onclick = () => {
+    modal.classList.add('hidden');
+    showSection('battles');
+  };
 }
 
 // Init

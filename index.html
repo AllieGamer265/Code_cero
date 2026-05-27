@@ -26,6 +26,13 @@
   </header>
 
   <main>
+    <!-- Navegación principal -->
+    <div id="mainNav" class="main-nav hidden">
+      <button id="navLessons" class="main-nav-btn active">📚 Lecciones</button>
+      <button id="navBattles" class="main-nav-btn">⚔️ Batallas</button>
+      <button id="navProfile" class="main-nav-btn">👤 Perfil</button>
+    </div>
+
     <!-- Lección -->
     <section id="lessonView">
       <div class="lesson-progress-bar">
@@ -46,6 +53,20 @@
     <section id="lessonSelector">
       <h2>Tus lecciones</h2>
       <div id="lessonList" class="lesson-grid">
+        <!-- Se rellena con JS -->
+      </div>
+    </section>
+
+    <!-- Perfil -->
+    <section id="profileSection" class="section-page hidden">
+      <div id="profileContent">
+        <!-- Se rellena con JS -->
+      </div>
+    </section>
+
+    <!-- Batallas -->
+    <section id="battleSection" class="section-page hidden">
+      <div id="battleContent">
         <!-- Se rellena con JS -->
       </div>
     </section>
@@ -87,15 +108,38 @@
           <div id="registerError" class="login-error"></div>
           <button id="registerBtn" class="btn btn-primary" style="width:100%; justify-content:center;">🔐 Crear cuenta</button>
           <button id="registerBackBtn" class="btn-back">← Volver</button>
+        </div>
       </div>
       <button id="resetDataBtn" class="btn-reset-data">🔄 Resetear datos</button>
     </div>
-  </div>
   </div>
 
   <footer>
     <p>CodeCero — Aprende lógica de programación desde cero</p>
   </footer>
+
+  <!-- Modal de reto -->
+  <div id="challengeModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>⚔️ Reto de batalla</h2>
+      <p id="challengeInfo"></p>
+      <div id="challengeActions" class="modal-actions">
+        <button id="acceptChallengeBtn" class="btn btn-primary">✅ Aceptar</button>
+        <button id="rejectChallengeBtn" class="btn btn-secondary">❌ Rechazar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de resultado de batalla -->
+  <div id="battleResultModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="battleResultTitle">⚔️ Batalla completada</h2>
+      <div id="battleResultContent"></div>
+      <div class="modal-actions">
+        <button id="battleResultOkBtn" class="btn btn-primary">👍 Entendido</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal de resultado -->
   <div id="resultModal" class="modal hidden">
