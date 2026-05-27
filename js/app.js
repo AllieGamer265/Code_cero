@@ -5,14 +5,16 @@ const PROGRESS_PREFIX = 'codecero_progress_';
 const avatars = [
   { id: 0, name: 'Novato', img: '🐣' },
   { id: 1, name: 'Pokemon', file: 'img/avatars/avatar_01.jpg' },
-  { id: 2, name: 'Aprendiz', img: '🐱', stars: 3 },
-  { id: 3, name: 'Curioso', img: '🦊', stars: 6 },
-  { id: 4, name: 'Guerrero', img: '⚔️', wins: 1 },
-  { id: 5, name: 'Programador', img: '🧙', stars: 10 },
-  { id: 6, name: 'Campeón', img: '🏆', wins: 3 },
-  { id: 7, name: 'Maestro', img: '🐉', stars: 15 },
-  { id: 8, name: 'Leyenda', img: '👑', wins: 5 },
-  { id: 9, name: 'Dios del Código', img: '🌟', stars: 20 },
+  { id: 2, name: 'Avatar 2', file: 'img/avatars/avatar_02.jpg' },
+  { id: 3, name: 'Avatar 3', file: 'img/avatars/avatar_03.jpg' },
+  { id: 4, name: 'Aprendiz', img: '🐱', stars: 3 },
+  { id: 5, name: 'Curioso', img: '🦊', stars: 6 },
+  { id: 6, name: 'Guerrero', img: '⚔️', wins: 1 },
+  { id: 7, name: 'Programador', img: '🧙', stars: 10 },
+  { id: 8, name: 'Campeón', img: '🏆', wins: 3 },
+  { id: 9, name: 'Maestro', img: '🐉', stars: 15 },
+  { id: 10, name: 'Leyenda', img: '👑', wins: 5 },
+  { id: 11, name: 'Dios del Código', img: '🌟', stars: 20 },
 ];
 
 const lessons = [
