@@ -58,6 +58,8 @@ Los ids 1-3 usan archivos de imagen. Los demas usan emoji placeholder. Cuando el
 Abrir `index.html` directo en el navegador (no necesita servidor). Para GitHub Pages, configurar en Settings del repo.
 
 ## Notas para la IA
+- Este documento es para las IA (como tu). Se actualiza conforme hagamos cambios (borrar, fusionar, añadir, etc.).
 - No se pueden ver imagenes. Pedir al usuario que describa o pase URLs.
 - El usuario habla español mexicano, informal.
 - Usar el nombre "CodeCero" para referirse a la app.
+- **Siempre preguntar antes de construir.** No empieces a programar ni hagas cambios sin antes preguntar al usuario y que el apruebe el plan. Al usuario le gusta que le pregunten antes de ejecutar cualquier cosa.
