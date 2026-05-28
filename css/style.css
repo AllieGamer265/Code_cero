@@ -1038,6 +1038,242 @@ footer {
 .block-animate:nth-child(4) { animation-delay: 0.3s; }
 .block-animate:nth-child(5) { animation-delay: 0.4s; }
 
+/* ─── Robot Grid Interactivo ─────────────────────── */
+.robot-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px dashed var(--border);
+}
+
+.robot-section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.robot-grid-container {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.robot-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 52px);
+  gap: 2px;
+  background: var(--border);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.robot-cell {
+  width: 52px;
+  height: 52px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  position: relative;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.robot-cell.robot {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 6px;
+  animation: popIn 0.3s ease;
+  z-index: 2;
+}
+
+.robot-cell.goal {
+  background: rgba(255, 215, 0, 0.15);
+  font-size: 28px;
+}
+
+.robot-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.robot-dir {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  font-size: 12px;
+  background: var(--surface);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  line-height: 1;
+}
+
+.robot-info {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 8px 0 16px;
+  flex-wrap: wrap;
+}
+
+.robot-palette {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.robot-palette-block {
+  padding: 12px 20px;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.robot-palette-block:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.25);
+}
+
+.robot-palette-block:active {
+  transform: translateY(0);
+}
+
+.robot-workspace {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  min-height: 70px;
+}
+
+.robot-workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.robot-step-count {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.robot-workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.robot-workspace-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.robot-workspace-block:hover {
+  opacity: 0.85;
+}
+
+.robot-workspace-block .ws-step {
+  font-size: 11px;
+  opacity: 0.7;
+  min-width: 20px;
+}
+
+.robot-ws-icon {
+  font-size: 16px;
+}
+
+.robot-workspace-block .remove-btn {
+  margin-left: auto;
+  background: rgba(255,255,255,0.25);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  line-height: 1;
+  padding: 0;
+}
+
+.robot-workspace-block .remove-btn:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.4);
+}
+
+.robot-workspace-block.executing {
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.6);
+  transform: scale(1.02);
+}
+
+.robot-workspace-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 12px;
+}
+
+.robot-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.robot-message {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 26px;
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.robot-message.success { color: var(--success); }
+.robot-message.fail { color: var(--accent); }
+.robot-message.info { color: var(--primary); }
+.robot-message.warning { color: #e67e22; }
+
 /* Responsive */
 @media (max-width: 600px) {
   #lessonContent { padding: 20px; }

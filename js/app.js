@@ -221,10 +221,58 @@ const lessons = [
       },
     ],
   },
+  {
+    id: 5,
+    icon: '🤖',
+    number: 'Lección 6',
+    title: 'Moviendo al Robot',
+    explanation: [
+      'Ahora vamos a <strong>programar un robot</strong> para que se mueva por un tablero. Usaremos bloques de instrucciones, como en los videojuegos de programación.',
+      'Tu misión: <strong>llevar al robot 🤖 hasta la estrella ⭐</strong> usando los bloques de movimiento. Da clic en los bloques para armar la secuencia, luego presiona ▶ Iniciar.',
+      'Cada bloque hace una acción: <strong>avanzar</strong>, <strong>girar</strong> o <strong>retroceder</strong>. El robot ejecuta los pasos uno por uno, en orden. ¡Como un verdadero programa!',
+    ],
+    interactive: true,
+    blocksExtra: 'Pista: para llegar a la estrella necesitas moverte hacia arriba y a la derecha. Combina Avanzar con Girar para cambiar de dirección.',
+    quiz: [
+      {
+        question: '¿En qué orden ejecuta el robot las instrucciones?',
+        options: [
+          'Todas al mismo tiempo',
+          'En orden aleatorio',
+          'Una por una, en el orden que las pusiste',
+          'De atrás hacia adelante',
+        ],
+        correct: 2,
+      },
+      {
+        question: 'Si el robot mira hacia arriba y le das "Avanzar", ¿qué pasa?',
+        options: [
+          'Se mueve hacia la derecha',
+          'Se mueve hacia arriba',
+          'Gira en su lugar',
+          'Se mueve hacia abajo',
+        ],
+        correct: 1,
+      },
+    ],
+  },
 ];
 
+// ─── Robot Grid Interactivo ─────────────────────────
+const ROBOT_GRID_SIZE = 7;
+const ROBOT_START = { x: 0, y: 6 };
+const ROBOT_GOAL = { x: 6, y: 0 };
+
+const robotBlockTypes = [
+  { id: 'forward', label: 'Avanzar', icon: '⬆️', color: 0 },
+  { id: 'turnLeft', label: 'Girar Izq', icon: '↩️', color: 3 },
+  { id: 'turnRight', label: 'Girar Der', icon: '↪️', color: 3 },
+  { id: 'backward', label: 'Retroceder', icon: '⬇️', color: 1 },
+];
+
+let robotState = null;
+
 // Estado
-let state = {
   currentLesson: 0,
   currentUser: null,
   progress: { completed: {}, stars: {} },
@@ -370,6 +418,11 @@ function renderLesson(lessonId) {
     extra.style.cssText = 'font-style: italic; color: var(--text-secondary); margin-top: 12px; font-size: 14px;';
     extra.textContent = lesson.blocksExtra;
     container.appendChild(extra);
+  }
+
+  // Interactive robot section
+  if (lesson.interactive) {
+    renderRobotSection(container);
   }
 
   // Quiz
@@ -1339,6 +1392,309 @@ function showBattleResult(battle) {
     modal.classList.add('hidden');
     showSection('battles');
   };
+}
+
+// ─── Funciones del Robot Grid ──────────────────────
+function initRobotState() {
+  robotState = {
+    x: ROBOT_START.x,
+    y: ROBOT_START.y,
+    direction: 0,
+    blocks: [],
+    isRunning: false,
+    isAtGoal: false,
+  };
+}
+
+function renderRobotSection(container) {
+  initRobotState();
+
+  const section = document.createElement('div');
+  section.className = 'robot-section';
+
+  section.innerHTML = `
+    <h3>🎮 Controla al Robot</h3>
+    <div class="robot-grid-container">
+      <div class="robot-grid" id="robotGrid"></div>
+    </div>
+    <div class="robot-info">
+      <span>🤖 Posición: (<span id="robotPosX">${ROBOT_START.x}</span>, <span id="robotPosY">${ROBOT_START.y}</span>)</span>
+      <span>🎯 Lleva al robot a la ⭐</span>
+    </div>
+    <div class="robot-palette" id="robotPalette"></div>
+    <div class="robot-workspace" id="robotWorkspace">
+      <div class="robot-workspace-header">
+        <span>📋 Tu secuencia</span>
+        <span id="robotStepCount" class="robot-step-count">0 pasos</span>
+      </div>
+      <div id="robotWorkspaceList" class="robot-workspace-list"></div>
+    </div>
+    <div class="robot-controls">
+      <button class="btn btn-primary" id="robotRunBtn">▶ Iniciar</button>
+      <button class="btn btn-secondary" id="robotClearBtn">🗑 Limpiar</button>
+      <button class="btn btn-secondary" id="robotResetBtn">🔄 Reiniciar</button>
+    </div>
+    <div id="robotMessage" class="robot-message"></div>
+  `;
+
+  container.appendChild(section);
+
+  renderRobotGrid();
+  renderRobotPalette();
+  renderRobotWorkspace();
+
+  document.getElementById('robotRunBtn').addEventListener('click', runRobotSequence);
+  document.getElementById('robotClearBtn').addEventListener('click', clearRobotBlocks);
+  document.getElementById('robotResetBtn').addEventListener('click', resetRobot);
+}
+
+function renderRobotGrid() {
+  const grid = document.getElementById('robotGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  for (let y = 0; y < ROBOT_GRID_SIZE; y++) {
+    for (let x = 0; x < ROBOT_GRID_SIZE; x++) {
+      const cell = document.createElement('div');
+      cell.className = 'robot-cell';
+
+      if (x === robotState.x && y === robotState.y) {
+        cell.classList.add('robot');
+        const dirArrows = ['⬆️', '➡️', '⬇️', '⬅️'];
+        cell.innerHTML = `
+          <span class="robot-emoji">🤖</span>
+          <span class="robot-dir">${dirArrows[robotState.direction]}</span>
+        `;
+      } else if (x === ROBOT_GOAL.x && y === ROBOT_GOAL.y) {
+        cell.classList.add('goal');
+        cell.textContent = '⭐';
+      }
+
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function renderRobotPalette() {
+  const palette = document.getElementById('robotPalette');
+  if (!palette) return;
+  palette.innerHTML = '';
+
+  robotBlockTypes.forEach(type => {
+    const btn = document.createElement('button');
+    btn.className = `robot-palette-block block-color-${type.color}`;
+    btn.innerHTML = `${type.icon} ${type.label}`;
+    btn.addEventListener('click', () => addRobotBlock(type.id));
+    palette.appendChild(btn);
+  });
+}
+
+function renderRobotWorkspace() {
+  const list = document.getElementById('robotWorkspaceList');
+  const count = document.getElementById('robotStepCount');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (robotState.blocks.length === 0) {
+    list.innerHTML = '<div class="robot-workspace-empty">⬅️ Da clic en los bloques de arriba para armar tu secuencia</div>';
+    if (count) count.textContent = '0 pasos';
+    return;
+  }
+
+  if (count) count.textContent = `${robotState.blocks.length} pasos`;
+
+  robotState.blocks.forEach((blockId, i) => {
+    const type = robotBlockTypes.find(t => t.id === blockId);
+    if (!type) return;
+    const div = document.createElement('div');
+    div.className = `robot-workspace-block block-color-${type.color}`;
+    div.dataset.index = i;
+    div.innerHTML = `
+      <span class="ws-step">${i + 1}.</span>
+      <span class="robot-ws-icon">${type.icon}</span>
+      <span>${type.label}</span>
+      <button class="remove-btn" data-index="${i}" title="Quitar">✕</button>
+    `;
+
+    div.querySelector('.remove-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeRobotBlock(i);
+    });
+
+    list.appendChild(div);
+  });
+}
+
+function addRobotBlock(typeId) {
+  if (robotState.isRunning) return;
+  robotState.blocks.push(typeId);
+  renderRobotWorkspace();
+  showRobotMessage('', '');
+}
+
+function removeRobotBlock(index) {
+  if (robotState.isRunning) return;
+  robotState.blocks.splice(index, 1);
+  renderRobotWorkspace();
+}
+
+function clearRobotBlocks() {
+  if (robotState.isRunning) return;
+  robotState.blocks = [];
+  resetRobotPosition();
+  renderRobotWorkspace();
+  renderRobotGrid();
+  updateRobotPosition();
+  showRobotMessage('', '');
+}
+
+function resetRobot() {
+  if (robotState.isRunning) return;
+  resetRobotPosition();
+  renderRobotGrid();
+  updateRobotPosition();
+  showRobotMessage('🔄 Robot reiniciado', 'info');
+  setTimeout(() => showRobotMessage('', ''), 1500);
+}
+
+function resetRobotPosition() {
+  robotState.x = ROBOT_START.x;
+  robotState.y = ROBOT_START.y;
+  robotState.direction = 0;
+  robotState.isAtGoal = false;
+}
+
+function updateRobotPosition() {
+  const posX = document.getElementById('robotPosX');
+  const posY = document.getElementById('robotPosY');
+  if (posX) posX.textContent = robotState.x;
+  if (posY) posY.textContent = robotState.y;
+}
+
+function moveRobotForward() {
+  let newX = robotState.x;
+  let newY = robotState.y;
+  switch (robotState.direction) {
+    case 0: newY--; break;
+    case 1: newX++; break;
+    case 2: newY++; break;
+    case 3: newX--; break;
+  }
+  if (newX < 0 || newX >= ROBOT_GRID_SIZE || newY < 0 || newY >= ROBOT_GRID_SIZE) {
+    showRobotMessage('🚫 ¡El robot chocó! Está en el borde del tablero.', 'fail');
+    robotState.isRunning = false;
+    return false;
+  }
+  robotState.x = newX;
+  robotState.y = newY;
+  return true;
+}
+
+function moveRobotBackward() {
+  let newX = robotState.x;
+  let newY = robotState.y;
+  switch (robotState.direction) {
+    case 0: newY++; break;
+    case 2: newY--; break;
+    case 1: newX--; break;
+    case 3: newX++; break;
+  }
+  if (newX < 0 || newX >= ROBOT_GRID_SIZE || newY < 0 || newY >= ROBOT_GRID_SIZE) {
+    showRobotMessage('🚫 ¡El robot chocó! Está en el borde del tablero.', 'fail');
+    robotState.isRunning = false;
+    return false;
+  }
+  robotState.x = newX;
+  robotState.y = newY;
+  return true;
+}
+
+function turnRobotLeft() {
+  robotState.direction = (robotState.direction + 3) % 4;
+}
+
+function turnRobotRight() {
+  robotState.direction = (robotState.direction + 1) % 4;
+}
+
+function highlightWorkspaceBlock(index) {
+  const blocks = document.querySelectorAll('.robot-workspace-block');
+  blocks.forEach((b, i) => {
+    b.classList.toggle('executing', i === index);
+  });
+}
+
+function clearWorkspaceHighlight() {
+  document.querySelectorAll('.robot-workspace-block').forEach(b => b.classList.remove('executing'));
+}
+
+function updateRobotControls(enabled) {
+  const runBtn = document.getElementById('robotRunBtn');
+  const clearBtn = document.getElementById('robotClearBtn');
+  const resetBtn = document.getElementById('robotResetBtn');
+  const paletteBtns = document.querySelectorAll('.robot-palette-block');
+  if (runBtn) runBtn.disabled = !enabled;
+  if (clearBtn) clearBtn.disabled = !enabled;
+  if (resetBtn) resetBtn.disabled = !enabled;
+  paletteBtns.forEach(b => b.disabled = !enabled);
+}
+
+function showRobotMessage(msg, type) {
+  const el = document.getElementById('robotMessage');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'robot-message' + (type ? ' ' + type : '');
+}
+
+async function runRobotSequence() {
+  if (robotState.isRunning) return;
+  if (robotState.blocks.length === 0) {
+    showRobotMessage('⬅️ Agrega bloques primero', 'warning');
+    return;
+  }
+
+  robotState.isRunning = true;
+  resetRobotPosition();
+  updateRobotControls(false);
+  showRobotMessage('▶ Ejecutando...', 'info');
+  renderRobotGrid();
+  updateRobotPosition();
+
+  for (let i = 0; i < robotState.blocks.length; i++) {
+    if (!robotState.isRunning) break;
+
+    const blockId = robotState.blocks[i];
+    highlightWorkspaceBlock(i);
+
+    let ok = true;
+    switch (blockId) {
+      case 'forward': ok = moveRobotForward(); break;
+      case 'backward': ok = moveRobotBackward(); break;
+      case 'turnLeft': turnRobotLeft(); break;
+      case 'turnRight': turnRobotRight(); break;
+    }
+
+    if (!ok) break;
+
+    renderRobotGrid();
+    updateRobotPosition();
+
+    if (robotState.x === ROBOT_GOAL.x && robotState.y === ROBOT_GOAL.y) {
+      robotState.isAtGoal = true;
+      showRobotMessage('🎉 ¡Llegaste a la estrella! Bien programado 🚀', 'success');
+      break;
+    }
+
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  if (robotState.isRunning && !robotState.isAtGoal) {
+    showRobotMessage('😅 El robot no llegó a la estrella. ¡Revisa tu secuencia!', 'fail');
+  }
+
+  robotState.isRunning = false;
+  updateRobotControls(true);
+  clearWorkspaceHighlight();
 }
 
 // Init
