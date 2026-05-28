@@ -273,6 +273,7 @@ const robotBlockTypes = [
 let robotState = null;
 
 // Estado
+let state = {
   currentLesson: 0,
   currentUser: null,
   progress: { completed: {}, stars: {} },
@@ -1201,9 +1202,11 @@ async function acceptChallenge(challengeId, fromUser, lessonId) {
     const user = state.currentUser.toLowerCase();
 
     // Crear batalla
+    const players = [fromUser.toLowerCase(), user];
     const battleRef = await window.__db.collection('battles').add({
       player1: fromUser.toLowerCase(),
       player2: user,
+      players,
       lessonId: lessonIdNum,
       status: 'waiting',
       answers1: [],

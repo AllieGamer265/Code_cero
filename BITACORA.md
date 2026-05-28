@@ -9,6 +9,11 @@
 - Actualizado CONTEXT.md con preferencias del usuario (preguntar antes de construir)
 - Creada esta bitácora
 
+### [28-May-2026] Fix: batallas no visibles para el retador (campo `players` faltante)
+- Corregido `acceptChallenge()` en `js/app.js`: agregado campo `players` al crear la batalla
+- El snapshot listener buscaba `players` array-contains pero nunca se guardaba
+- Esto causaba que el retador nunca viera que aceptaron su reto
+
 ### [28-May-2026] Implementación del Robot Interactivo
 - **css/style.css**: Agregados estilos completos para robot grid, paleta de bloques, workspace, controles y mensajes
 - **js/app.js**:
